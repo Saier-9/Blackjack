@@ -1,0 +1,257 @@
+import tkinter as tk
+from tkinter import font
+import random
+
+class BlackjackGame:
+    def __init__(self, root:tk.Tk):
+        self.root = root
+        self.root.title("Blackjack")
+        self.balance = 100
+        self.bet = 0
+        self.deck = self.create_deck()
+        self.player_hand = []
+        self.dealer_hand = []
+        
+        self.suit_symbols = {'Hearts': '♥', 'Diamonds': '♦', 'Clubs': '♣', 'Spades': '♠'}
+        self.suit_colors = {'Hearts': 'red', 'Diamonds': 'red', 'Clubs': 'black', 'Spades': 'black'}
+
+        self.setup_ui()
+
+    def setup_ui(self):
+        self.root.geometry("375x375")
+
+        self.balance_label = tk.Label(self.root, text=f"Balance: ${self.balance}", background="#009a4d", fg="white")
+        self.balance_label.pack()
+        
+        self.bet_label = tk.Label(self.root, text="Bet: $0", background="#009a4d", fg="white", font=(font.nametofont("TkDefaultFont").actual(), 10, "bold"))
+        self.bet_label.pack()
+        
+        self.bet_entry = tk.Entry(self.root, background="#00d169")
+        self.bet_entry.pack()
+        
+        self.bet_button = tk.Button(self.root, text="Place Bet", command=self.place_bet, background="#00d169")
+        self.bet_button.pack()
+        
+        self.player_frame = tk.Frame(self.root, background="#009a4d", pady=5)
+        self.player_frame.pack()
+        
+        self.dealer_frame = tk.Frame(self.root, background="#009a4d", pady=5)
+        self.dealer_frame.pack()
+        
+        self.button_frame = tk.Frame(self.root, background="#009a4d")
+        self.button_frame.pack()
+
+        self.hit_button = tk.Button(self.button_frame, text="Hit", command=self.hit, state=tk.DISABLED, background="#00d169")
+        self.hit_button.pack(side=tk.LEFT, padx=2)
+        
+        self.stand_button = tk.Button(self.button_frame, text="Stand", command=self.stand, state=tk.DISABLED, background="#00d169")
+        self.stand_button.pack(side=tk.LEFT, padx=2)
+
+        self.dd_button = tk.Button(self.button_frame, text="Double Down", command=self.dd, state=tk.DISABLED, background="#00d169")
+        self.dd_button.pack(side=tk.LEFT, padx=2)
+
+        self.player_total_label = tk.Label(self.root, text="Your total: 0", background="#009a4d", fg="white")
+        self.player_total_label.pack()
+        
+        self.dealer_total_label = tk.Label(self.root, text="Dealer's total: ?", background="#009a4d", fg="white")
+        self.dealer_total_label.pack()
+        
+        self.player_total_label.config(text=f"Your total: {self.calculate_score(self.player_hand)}")
+        self.dealer_total_label.config(text="Dealer's total: ?")
+
+        self.result_label = tk.Label(self.root, text="", background="#009a4d", fg="white", font=("Segoe UI Variable", 10, "bold"))
+        self.result_label.pack()
+
+        canvas1 = tk.Canvas(self.player_frame, width=50, height=70, bg='white', highlightthickness=1, highlightbackground='black')
+        canvas1.pack(side=tk.LEFT, padx=2)
+        canvas1.create_rectangle(5, 5, 45, 65, fill='blue')
+        canvas2 = tk.Canvas(self.dealer_frame, width=50, height=70, bg='white', highlightthickness=1, highlightbackground='black')
+        canvas2.pack(side=tk.LEFT, padx=2)
+        canvas2.create_rectangle(5, 5, 45, 65, fill='blue')
+
+        self.root.configure(background="#009a4d")
+
+    def create_deck(self):
+        suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
+        values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+        return [{'suit': suit, 'value': value} for suit in suits for value in values] * 4
+
+    def deal_card(self, hand):
+        card = random.choice(self.deck)
+        self.deck.remove(card)
+        hand.append(card)
+        self.update_ui()
+
+    def calculate_score(self, hand):
+        score = 0
+        aces = 0
+        for card in hand:
+            if card['value'] in ['J', 'Q', 'K']:
+                score += 10
+            elif card['value'] == 'A':
+                aces += 1
+                score += 11
+            else:
+                score += int(card['value'])
+        
+        while score > 21 and aces:
+            score -= 10
+            aces -= 1
+        
+        return score
+
+    def update_ui(self, reveal_dealer=False):
+        for widget in self.player_frame.winfo_children():
+            widget.destroy()
+        for widget in self.dealer_frame.winfo_children():
+            widget.destroy()
+        
+        for card in self.player_hand:
+            self.draw_card(self.player_frame, card)
+        
+        for i, card in enumerate(self.dealer_hand):
+            if i == 0 and not reveal_dealer:
+                self.draw_card(self.dealer_frame, None)
+            else:
+                self.draw_card(self.dealer_frame, card)
+
+        self.player_total_label.config(text=f"Your total: {self.calculate_score(self.player_hand)}")
+        if reveal_dealer:
+            self.dealer_total_label.config(text=f"Dealer's total: {self.calculate_score(self.dealer_hand)}")
+        else:
+            self.dealer_total_label.config(text="Dealer's total: ?")
+
+    def draw_card(self, frame, card):
+        canvas = tk.Canvas(frame, width=50, height=70, bg='white', highlightthickness=1, highlightbackground='black')
+        canvas.pack(side=tk.LEFT, padx=2)
+        if card:
+            suit_symbol = self.suit_symbols[card['suit']]
+            canvas.create_text(25, 35, text=f"{card['value']}\n{suit_symbol}", font=("Segoe UI Variable", 14, "bold"), fill=self.suit_colors[card['suit']])
+        else:
+            canvas.create_rectangle(5, 5, 45, 65, fill='blue')
+
+    def place_bet(self):
+        bet_amount = int(self.bet_entry.get())
+        if bet_amount <= 0 or bet_amount > self.balance:
+            return
+        self.bet = bet_amount
+        self.balance -= self.bet
+        self.balance_label.config(text=f"Balance: ${self.balance}")
+        self.bet_label.config(text=f"Bet: ${self.bet}")
+        self.bet_button.config(state=tk.DISABLED)
+        self.hit_button.config(state=tk.NORMAL)
+        self.stand_button.config(state=tk.NORMAL)
+        self.dd_button.config(state=tk.NORMAL)
+        self.result_label.config(text="")
+        
+        self.player_hand = []
+        self.dealer_hand = []
+        self.deal_card(self.player_hand)
+        self.deal_card(self.player_hand)
+        self.deal_card(self.dealer_hand)
+        self.deal_card(self.dealer_hand)
+        self.update_ui()
+        if self.calculate_score(self.player_hand) == 21:
+            self.balance += self.bet * 2
+            self.result_label.config(text="Blackjack! You win!")
+            self.end_round()
+            self.new_round()
+
+    def new_round(self):
+        self.bet = 0
+        self.bet_label.config(text=f"Bet: ${self.bet}")
+        self.bet_button.config(state=tk.NORMAL)
+        self.hit_button.config(state=tk.DISABLED)
+        self.stand_button.config(state=tk.DISABLED)
+        self.dd_button.config(state=tk.DISABLED)
+        
+    def dd(self):
+        self.hit(True)
+
+    def hit(self, double=False):
+        if double:
+            bet_amount = self.bet
+            if bet_amount > self.balance:
+                return
+            total_bet = bet_amount * 2
+            self.balance -= bet_amount
+            self.balance_label.config(text=f"Balance: ${self.balance}")
+            self.bet_label.config(text=f"Bet: ${total_bet}")
+
+        self.deal_card(self.player_hand)
+        player_score = self.calculate_score(self.player_hand)
+        dealer_score = self.calculate_score(self.dealer_hand)
+
+        if player_score == 21:
+            self.balance += self.bet * 2
+            self.result_label.config(text="Blackjack! You win!")
+            self.end_round()
+            self.new_round()
+        elif player_score > 21:
+            self.result_label.config(text="You busted! Dealer wins.")
+            self.end_round()
+            self.new_round()
+        elif double:
+            while self.calculate_score(self.dealer_hand) < 17:
+                self.deal_card(self.dealer_hand)
+
+            if player_score > dealer_score:
+                self.balance += total_bet * 2
+                self.result_label.config(text="You win!")
+                self.end_round()
+                self.new_round()
+            elif dealer_score > 21:
+                self.balance += total_bet * 2
+                self.result_label.config(text="Dealer busted! You win.")
+                self.end_round()
+                self.new_round()
+            elif player_score == dealer_score:
+                self.balance += total_bet
+                self.result_label.config(text="It's a push!")
+                self.end_round()
+                self.new_round()
+            else:
+                self.result_label.config(text="Dealer wins!")
+                self.end_round()
+                self.new_round()
+
+    def stand(self):
+        while self.calculate_score(self.dealer_hand) < 17:
+            self.deal_card(self.dealer_hand)
+        
+        player_score = self.calculate_score(self.player_hand)
+        dealer_score = self.calculate_score(self.dealer_hand)
+        
+        if player_score > dealer_score:
+            self.balance += self.bet * 2
+            self.result_label.config(text="You win!")
+            self.end_round()
+            self.new_round()
+        elif dealer_score > 21:
+            self.balance += self.bet * 2
+            self.result_label.config(text="Dealer busted! You win.")
+            self.end_round()
+            self.new_round()
+        elif player_score == dealer_score:
+            self.balance += self.bet
+            self.result_label.config(text="It's a tie!")
+            self.end_round()
+            self.new_round()
+        else:
+            self.result_label.config(text="Dealer wins!")
+            self.end_round()
+            self.new_round()
+
+    def end_round(self):
+        if self.balance == 0:
+            self.balance = 1
+        self.balance_label.config(text=f"Balance: ${self.balance}")
+        self.hit_button.config(state=tk.DISABLED)
+        self.stand_button.config(state=tk.DISABLED)
+        self.dd_button.config(state=tk.DISABLED)
+        self.update_ui(reveal_dealer=True)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    game = BlackjackGame(root)
+    root.mainloop()
