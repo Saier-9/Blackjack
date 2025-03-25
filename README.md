@@ -1,5 +1,7 @@
 # Blackjack Game
 
+![](https://files.catbox.moe/p3yebt.png)
+
 ## Overview
 This repository contains simple Blackjack game built using Python and Tkinter. It features betting mechanics, currency, and a graphical representation of cards. The game starts with a balance of $100, and players can place bets, hit, stand, or double down to try and beat the dealer.
 
@@ -12,7 +14,7 @@ This repository contains simple Blackjack game built using Python and Tkinter. I
 - Balance tracking and win/loss conditions
 
 ## How to Play
-1. Enter your bet amount and press "Place Bet".
+1. Enter your own bet amount, type "all" to bet your entire balance, or "half" to bet half your balance, and then press "Place Bet".
 2. You and the dealer are each dealt two cards.
 3. Choose to "Hit" (draw another card), "Stand" (keep your current hand), or "Double Down" (double your bet and draw only one more card).
 4. The dealer will draw until they reach at least 17.
