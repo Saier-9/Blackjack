@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import font
-import random, time
+from PIL import Image, ImageTk
+import random
 
 class BlackjackGame:
     def __init__(self, root:tk.Tk):
@@ -11,71 +12,79 @@ class BlackjackGame:
         self.deck = self.create_deck()
         self.player_hand = []
         self.dealer_hand = []
+        self.card_images = []
         self.soft = ""
-        
-        self.suit_symbols = {'Hearts': '♥', 'Diamonds': '♦', 'Clubs': '♣', 'Spades': '♠'}
-        self.suit_colors = {'Hearts': 'red', 'Diamonds': 'red', 'Clubs': 'black', 'Spades': 'black'}
+        self.bg_color = "#009a4d"
+        self.accent_color = "#00d169"
+        self.card_back_color = "blue"
 
         self.setup_ui()
+        
+    def load_card_back(self):
+        card_back_image = Image.open(f"assets/backs/{self.card_back_color}_back.png")
+        card_back_image = card_back_image.resize((55, 80))
+        self.card_back = ImageTk.PhotoImage(card_back_image)
 
     def setup_ui(self):
-        self.root.geometry("375x375")
+        self.root.geometry("385x385")
+        self.root.configure(background=self.bg_color)
 
-        self.balance_label = tk.Label(self.root, text=f"Balance: ${self.balance}", background="#009a4d", fg="white")
+        self.balance_label = tk.Label(self.root, text=f"Balance: ${self.balance}", background=self.bg_color, fg="white")
         self.balance_label.pack()
         
-        self.bet_label = tk.Label(self.root, text="Bet: $0", background="#009a4d", fg="white", font=(font.nametofont("TkDefaultFont").actual(), 10, "bold"))
+        self.bet_label = tk.Label(self.root, text="Bet: $0", background=self.bg_color, fg="white", font=(font.nametofont("TkDefaultFont").actual(), 10, "bold"))
         self.bet_label.pack()
 
-        self.bet_entry = tk.Entry(self.root, background="#00d169")
+        self.bet_entry = tk.Entry(self.root, background=self.accent_color)
         self.bet_entry.pack()
         
-        self.bet_button = tk.Button(self.root, text="Place Bet", command=self.place_bet, background="#00d169", activebackground="#00d169")
+        self.bet_button = tk.Button(self.root, text="Place Bet", command=self.place_bet, background=self.accent_color, activebackground=self.accent_color)
         self.bet_button.pack()
         
-        self.player_frame = tk.Frame(self.root, background="#009a4d", pady=5)
+        self.player_frame = tk.Frame(self.root, background=self.bg_color, pady=5)
         self.player_frame.pack()
         
-        self.dealer_frame = tk.Frame(self.root, background="#009a4d", pady=5)
+        self.dealer_frame = tk.Frame(self.root, background=self.bg_color, pady=5)
         self.dealer_frame.pack()
         
-        self.button_frame = tk.Frame(self.root, background="#009a4d")
+        self.button_frame = tk.Frame(self.root, background=self.bg_color)
         self.button_frame.pack()
 
-        self.hit_button = tk.Button(self.button_frame, text="Hit", command=self.hit, state=tk.DISABLED, background="#00d169", activebackground="#00d169")
+        self.hit_button = tk.Button(self.button_frame, text="Hit", command=self.hit, state=tk.DISABLED, background=self.accent_color, activebackground=self.accent_color)
         self.hit_button.pack(side=tk.LEFT, padx=2)
         
-        self.stand_button = tk.Button(self.button_frame, text="Stand", command=self.stand, state=tk.DISABLED, background="#00d169", activebackground="#00d169")
+        self.stand_button = tk.Button(self.button_frame, text="Stand", command=self.stand, state=tk.DISABLED, background=self.accent_color, activebackground=self.accent_color)
         self.stand_button.pack(side=tk.LEFT, padx=2)
 
-        self.dd_button = tk.Button(self.button_frame, text="Double Down", command=self.dd, state=tk.DISABLED, background="#00d169", activebackground="#00d169")
-        self.dd_button.pack(side=tk.LEFT, padx=2)
+        self.double_down_button = tk.Button(self.button_frame, text="Double Down", command=self.double_down, state=tk.DISABLED, background=self.accent_color, activebackground=self.accent_color)
+        self.double_down_button.pack(side=tk.LEFT, padx=2)
 
-        self.player_total_label = tk.Label(self.root, text="Your total: 0", background="#009a4d", fg="white")
+        self.player_total_label = tk.Label(self.root, text="Your total: 0", background=self.bg_color, fg="white")
         self.player_total_label.pack()
         
-        self.dealer_total_label = tk.Label(self.root, text="Dealer's total: ?", background="#009a4d", fg="white")
+        self.dealer_total_label = tk.Label(self.root, text="Dealer's total: ?", background=self.bg_color, fg="white")
         self.dealer_total_label.pack()
         
         self.player_total_label.config(text=f"Your total: {self.calculate_score(self.player_hand)}")
         self.dealer_total_label.config(text="Dealer's total: ?")
 
-        self.result_label = tk.Label(self.root, text="", background="#009a4d", fg="white", font=("Segoe UI Variable", 10, "bold"))
+        self.result_label = tk.Label(self.root, text="", background=self.bg_color, fg="white", font=("Segoe UI Variable", 10, "bold"))
         self.result_label.pack()
 
-        canvas1 = tk.Canvas(self.player_frame, width=50, height=70, bg='white', highlightthickness=1, highlightbackground='black')
-        canvas1.pack(side=tk.LEFT, padx=2)
-        canvas1.create_rectangle(5, 5, 45, 65, fill='blue')
-        canvas2 = tk.Canvas(self.dealer_frame, width=50, height=70, bg='white', highlightthickness=1, highlightbackground='black')
-        canvas2.pack(side=tk.LEFT, padx=2)
-        canvas2.create_rectangle(5, 5, 45, 65, fill='blue')
-
-        self.root.configure(background="#009a4d")
+        self.load_card_back()
+        card_label = tk.Label(self.player_frame, image=self.card_back, background=self.bg_color)
+        card_label.pack(side=tk.LEFT, padx=2)
+        card_label = tk.Label(self.player_frame, image=self.card_back, background=self.bg_color)
+        card_label.pack(side=tk.LEFT, padx=2)        
+        card_label = tk.Label(self.dealer_frame, image=self.card_back, background=self.bg_color)
+        card_label.pack(side=tk.LEFT, padx=2)
+        card_label = tk.Label(self.dealer_frame, image=self.card_back, background=self.bg_color)
+        card_label.pack(side=tk.LEFT, padx=2)
 
     def create_deck(self):
-        suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
+        suits = ['H', 'D', 'C', 'S']
         values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
-        return [{'suit': suit, 'value': value} for suit in suits for value in values] * 4
+        return [{'value': value, 'suit': suit} for suit in suits for value in values] * 4
 
     def deal_card(self, hand):
         card = random.choice(self.deck)
@@ -125,13 +134,16 @@ class BlackjackGame:
             self.dealer_total_label.config(text="Dealer's total: ?")
 
     def draw_card(self, frame, card):
-        canvas = tk.Canvas(frame, width=50, height=70, bg='white', highlightthickness=1, highlightbackground='black')
-        canvas.pack(side=tk.LEFT, padx=2)
         if card:
-            suit_symbol = self.suit_symbols[card['suit']]
-            canvas.create_text(25, 35, text=f"{card['value']}\n{suit_symbol}", font=("Segoe UI Variable", 14, "bold"), fill=self.suit_colors[card['suit']])
+            card_face_image = Image.open(f"assets/cards/{card["value"]}{card["suit"]}.png")
+            card_face_image = card_face_image.resize((55, 80))
+            card_face = ImageTk.PhotoImage(card_face_image)
+            self.card_images.append(card_face)
+            card_label = tk.Label(frame, image=card_face, background=self.bg_color)
+            card_label.pack(side=tk.LEFT, padx=2)
         else:
-            canvas.create_rectangle(5, 5, 45, 65, fill='blue')
+            card_label = tk.Label(frame, image=self.card_back, background=self.bg_color)
+            card_label.pack(side=tk.LEFT, padx=2)
 
     def place_bet(self):
         bet_str = self.bet_entry.get()
@@ -140,9 +152,12 @@ class BlackjackGame:
         elif bet_str == "half":
             bet_amount = self.balance // 2
         else:
-            bet_amount = int(bet_str)
+            try:
+                bet_amount = int(bet_str)
+            except ValueError:
+                return
         if bet_amount <= 0 or bet_amount > self.balance:
-            return 
+            return
         self.bet = bet_amount
         self.balance -= self.bet
         self.balance_label.config(text=f"Balance: ${self.balance}")
@@ -150,7 +165,7 @@ class BlackjackGame:
         self.bet_button.config(state=tk.DISABLED)
         self.hit_button.config(state=tk.NORMAL)
         self.stand_button.config(state=tk.NORMAL)
-        self.dd_button.config(state=tk.NORMAL)
+        self.double_down_button.config(state=tk.NORMAL)
         self.result_label.config(text="")
         
         self.player_hand = []
@@ -172,9 +187,9 @@ class BlackjackGame:
         self.bet_button.config(state=tk.NORMAL)
         self.hit_button.config(state=tk.DISABLED)
         self.stand_button.config(state=tk.DISABLED)
-        self.dd_button.config(state=tk.DISABLED)
+        self.double_down_button.config(state=tk.DISABLED)
         
-    def dd(self):
+    def double_down(self):
         self.hit(True)
 
     def hit(self, double=False):
@@ -235,7 +250,7 @@ class BlackjackGame:
         self.balance_label.config(text=f"Balance: ${self.balance}")
         self.hit_button.config(state=tk.DISABLED)
         self.stand_button.config(state=tk.DISABLED)
-        self.dd_button.config(state=tk.DISABLED)
+        self.double_down_button.config(state=tk.DISABLED)
         self.update_ui(reveal_dealer=True)
 
 if __name__ == "__main__":
