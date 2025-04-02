@@ -1,4 +1,4 @@
-# Blackjack Game
+# Blackjack
 
 ![](assets/example.png)
 
