@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import font
 from PIL import Image, ImageTk
-import random
+import random, time, math
 
 class BlackjackGame:
     def __init__(self, root:tk.Tk):
@@ -90,7 +90,9 @@ class BlackjackGame:
         card = random.choice(self.deck)
         self.deck.remove(card)
         hand.append(card)
-        self.update_ui()
+        self.clear_table()
+        self.add_player_cards()
+        self.add_dealer_cards()
 
     def calculate_score(self, hand):
         score = 0
@@ -112,22 +114,25 @@ class BlackjackGame:
         
         return score
 
-    def update_ui(self, reveal_dealer=False):
+    def clear_table(self):
         for widget in self.player_frame.winfo_children():
             widget.destroy()
         for widget in self.dealer_frame.winfo_children():
             widget.destroy()
-        
+
+    def add_player_cards(self):
         for card in self.player_hand:
             self.draw_card(self.player_frame, card)
+
+        self.player_total_label.config(text=f"Your total: {self.soft}{self.calculate_score(self.player_hand)}")
         
+    def add_dealer_cards(self, reveal_dealer=False):
         for i, card in enumerate(self.dealer_hand):
             if i == 0 and not reveal_dealer:
                 self.draw_card(self.dealer_frame, None)
             else:
                 self.draw_card(self.dealer_frame, card)
 
-        self.player_total_label.config(text=f"Your total: {self.soft}{self.calculate_score(self.player_hand)}")
         if reveal_dealer:
             self.dealer_total_label.config(text=f"Dealer's total: {self.soft}{self.calculate_score(self.dealer_hand)}")
         else:
@@ -167,6 +172,7 @@ class BlackjackGame:
         self.stand_button.config(state=tk.NORMAL)
         self.double_down_button.config(state=tk.NORMAL)
         self.result_label.config(text="")
+        self.clear_table()
         
         self.player_hand = []
         self.dealer_hand = []
@@ -174,9 +180,8 @@ class BlackjackGame:
         self.deal_card(self.player_hand)
         self.deal_card(self.dealer_hand)
         self.deal_card(self.dealer_hand)
-        self.update_ui()
         if self.calculate_score(self.player_hand) == 21:
-            self.balance += self.bet * 2
+            self.balance += math.floor(self.bet * 2.5)
             self.result_label.config(text="Blackjack! You win!")
             self.end_round()
             self.new_round()
@@ -205,13 +210,8 @@ class BlackjackGame:
         self.deal_card(self.player_hand)
         player_score = self.calculate_score(self.player_hand)
 
-        if player_score == 21:
-            self.balance += self.bet * 2
-            self.result_label.config(text="Blackjack! You win!")
-            self.end_round()
-            self.new_round()
-        elif player_score > 21:
-            self.result_label.config(text="You busted! Dealer wins.")
+        if player_score > 21:
+            self.result_label.config(text="You busted!")
             self.end_round()
             self.new_round()
         elif double:
@@ -236,7 +236,7 @@ class BlackjackGame:
             self.new_round()
         elif player_score == dealer_score:
             self.balance += self.bet
-            self.result_label.config(text="It's a tie!")
+            self.result_label.config(text="It's a push!")
             self.end_round()
             self.new_round()
         else:
@@ -251,7 +251,9 @@ class BlackjackGame:
         self.hit_button.config(state=tk.DISABLED)
         self.stand_button.config(state=tk.DISABLED)
         self.double_down_button.config(state=tk.DISABLED)
-        self.update_ui(reveal_dealer=True)
+        self.clear_table()
+        self.add_player_cards()
+        self.add_dealer_cards(True)
 
 if __name__ == "__main__":
     root = tk.Tk()
