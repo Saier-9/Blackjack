@@ -7,7 +7,7 @@ This repository contains simple Blackjack game built using Python and Tkinter. I
 
 ## Features
 - Playable Blackjack game with betting mechanics
-- Graphical user interface using Tkinter
+- Graphical user interface made using Tkinter
 - Card visualization with suits and colors
 - Double Down functionality
 - Automatic dealer logic
